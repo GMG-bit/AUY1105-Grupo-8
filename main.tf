@@ -1,3 +1,4 @@
+# Archivo principal de Terraform main.tf en raiz del proyecto. Aquí se definen los recursos principales y se llaman a los módulos para crear la infraestructura completa.
 # Llama a nuestro módulo local que está en la carpeta modules/vpc
 module "vpc" {
   source = "./modules/vpc" # La ruta a la carpeta del módulo
@@ -66,36 +67,9 @@ module "s3_cloudfront" {
 }
 # --- 1. Security Group compartido para los servidores ---
 resource "aws_security_group" "servers_sg" {
-  name        = "${var.project_name}-servers-sg"
-  description = "Permite trafico web"
+  name        = "AUY1105-${var.project_name}-servers-sg"
+  description = "Permite solo trafico SSH desde IPs confiables"
   vpc_id      = module.vpc.vpc_id
-  # --- BUCLE FOR_EACH (Requerimiento) ---
-  # Crea una regla de entrada por cada IP en la lista var.allowed_ips
-  dynamic "ingress" {
-    for_each = var.allowed_ips # Itera sobre ["0.0.0.0/0"] u otras IPs
-    content {
-      description = "Acceso HTTP permitido desde IP confiable"
-      from_port   = 80
-      to_port     = 80
-      protocol    = "tcp"
-      cidr_blocks = [ingress.value] # ingress.value es la IP actual del bucle
-    }
-  }
-  # ingress {
-  #   from_port   = 80
-  #   to_port     = 80
-  #   protocol    = "tcp"
-  #   cidr_blocks = ["0.0.0.0/0"]
-  # }
-  
-  # RDP para Windows
-  ingress {
-    from_port   = 3389
-    to_port     = 3389
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-  
   # SSH para Linux
   ingress {
     from_port   = 22
@@ -109,6 +83,9 @@ resource "aws_security_group" "servers_sg" {
     to_port     = 0
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
+  }
+  tags = {
+    Name = "AUY1105-${var.project_name}-servers-sg"
   }
 }
 # ---------------------------------------------------------
