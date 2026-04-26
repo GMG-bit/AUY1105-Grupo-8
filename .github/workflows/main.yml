@@ -1,0 +1,38 @@
+name: "Terraform CI"
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  terraform-pipeline:
+    name: "Calidad y Seguridad"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      # 1. Análisis estático con TFLint
+      - name: Setup TFLint
+        uses: terraform-linters/setup-tflint@v3
+      - name: Run TFLint
+        run: |
+          tflint --init
+          tflint -f compact
+
+      # 2. Análisis de seguridad con Checkov
+      - name: Run Checkov
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: .
+          framework: terraform
+
+      # 3. Validación de Terraform
+      - name: Terraform Init
+        run: terraform init -backend=false
+      - name: Terraform Validate
+        run: terraform validate
