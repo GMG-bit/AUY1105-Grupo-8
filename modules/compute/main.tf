@@ -3,7 +3,6 @@ variable "vpc_id" {}
 variable "subnet_id" { description = "ID de la subred donde se alojarán" }
 variable "security_group_ids" { type = list(string) }
 
-# Variables de Lógica
 variable "os_type" {
   description = "Sistema Operativo: 'linux' o 'windows'"
   type        = string
@@ -16,18 +15,18 @@ variable "instance_count" {
 
 # --- 1. Lógica de Selección de AMI (Imagen) ---
 
-# Buscar AMI de Amazon Linux 2 (Solo si os_type es linux)
-data "aws_ami" "linux" {
+# Buscar AMI de Ubuntu 24.04 LTS (Noble) - REQUISITO 2
+data "aws_ami" "ubuntu" {
   count       = var.os_type == "linux" ? 1 : 0
   most_recent = true
-  owners      = ["amazon"]
+  owners      = ["099720109477"] # ID Oficial de Canonical
   filter {
     name   = "name"
-    values = ["amzn2-ami-hvm-*-x86_64-gp2"]
+    values = ["ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server-*"]
   }
 }
 
-# Buscar AMI de Windows Server 2019 (Solo si os_type es windows)
+# Buscar AMI de Windows Server 2019
 data "aws_ami" "windows" {
   count       = var.os_type == "windows" ? 1 : 0
   most_recent = true
@@ -38,21 +37,18 @@ data "aws_ami" "windows" {
   }
 }
 
-# Variable Local para decidir cuál ID usar
 locals {
-  # 1. Selección de la ID de la Imagen (AMI)
-  ami_id = var.os_type == "linux" ? data.aws_ami.linux[0].id : data.aws_ami.windows[0].id
+  ami_id = var.os_type == "linux" ? data.aws_ami.ubuntu[0].id : data.aws_ami.windows[0].id
 
-  # 2. Definimos el script de Linux por separado
   user_data_linux = <<-EOF
     #!/bin/bash
-    yum update -y
-    yum install httpd -y
-    service httpd start
-    echo "Hola desde Linux App 1 (Host: $(hostname))" > /var/www/html/index.html
+    apt-get update -y
+    apt-get install apache2 -y
+    systemctl start apache2
+    systemctl enable apache2
+    echo "Hola desde Ubuntu 24.04 (Host: $(hostname))" > /var/www/html/index.html
   EOF
 
-  # 3. Definimos el script de Windows por separado
   user_data_windows = <<-EOF
     <powershell>
     Install-WindowsFeature -name Web-Server -IncludeManagementTools
@@ -60,34 +56,30 @@ locals {
     </powershell>
   EOF
 
-  # 4. Selección Final: ¿Cuál script usamos?
-  # Aquí el ternario es limpio y simple, sin bloques de texto que confundan al editor.
   user_data = var.os_type == "linux" ? local.user_data_linux : local.user_data_windows
 }
 
-# --- 2. Creación de Instancias (Requisito: count) ---
+# --- 2. Creación de Instancias ---
 
 resource "aws_instance" "server" {
-  count = var.instance_count # Uso obligatorio de count
+  count = var.instance_count
 
   ami           = local.ami_id
-  instance_type = "t2.micro" # O t3.micro. IMPORTANTE: t2.medium consume mucho crédito.
+  instance_type = "t2.micro" # REQUISITO 2
   subnet_id     = var.subnet_id
   
   vpc_security_group_ids = var.security_group_ids
   
   user_data = local.user_data
 
-  # --- Requisito: Uso de funciones built-in ---
+  # Nomenclatura Requerida: <sigla-curso>-<nombre-aplicación>-<tipo-recurso>
   tags = {
-    # upper() transforma a mayúsculas
-    Name = "${upper(var.project_name)}-${upper(var.os_type)}-SRV-${count.index + 1}"
-    Environment = upper("lab")
+    Name        = "AUY1105-${var.project_name}-ec2" # REQUISITO 2
+    Environment = "lab"
     OS_Type     = var.os_type
   }
 }
 
-# Output para ver las IPs
 output "instance_ips" {
   value = aws_instance.server[*].public_ip
 }
