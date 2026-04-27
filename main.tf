@@ -27,6 +27,7 @@ resource "aws_security_group" "servers_sg" {
 
   # SSH para Linux
   ingress {
+    description = "Permite trafico SSH"
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
@@ -35,6 +36,7 @@ resource "aws_security_group" "servers_sg" {
 
   # Permite toda la salida
   egress {
+    description = "Permite todo el trafico saliente"
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
