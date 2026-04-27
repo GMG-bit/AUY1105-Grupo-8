@@ -19,6 +19,8 @@ module "vpc" {
 # ---------------------------------------------------------
 # Security Group compartido para los servidores
 resource "aws_security_group" "servers_sg" {
+  #checkov:skip=CKV_AWS_24:SSH desde 0.0.0.0/0 requerido para acceso al lab
+  #checkov:skip=CKV_AWS_382:Egress irrestricto requerido para conectividad del lab
   name        = "${var.project_name}-servers-sg"
   description = "Permite trafico SSH"
   vpc_id      = module.vpc.vpc_id

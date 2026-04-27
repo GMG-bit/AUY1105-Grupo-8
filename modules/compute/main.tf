@@ -28,13 +28,27 @@ data "aws_ami" "ubuntu" {
 # --- 2. Creación de Instancias ---
 
 resource "aws_instance" "server" {
+  #checkov:skip=CKV_AWS_135:t2.micro no soporta EBS optimization
   count = var.instance_count
 
-  ami           = data.aws_ami.ubuntu.id
-  instance_type = "t2.micro"
-  subnet_id     = var.subnet_id
+  ami                  = data.aws_ami.ubuntu.id
+  instance_type        = "t2.micro"
+  subnet_id            = var.subnet_id
+  monitoring           = true
+  iam_instance_profile = "LabInstanceProfile"
 
   vpc_security_group_ids = var.security_group_ids
+
+  # Fuerza IMDSv2 (deshabilita IMDSv1)
+  metadata_options {
+    http_endpoint = "enabled"
+    http_tokens   = "required"
+  }
+
+  # Disco raíz cifrado
+  root_block_device {
+    encrypted = true
+  }
 
   tags = {
     Name        = "AUY1105-${var.project_name}-ec2"
