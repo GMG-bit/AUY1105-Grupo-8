@@ -9,67 +9,67 @@ module "vpc" {
     public_subnet_cidrs = var.public_subnet_cidrs
     }
 # ---------------------------------------------------------
-# BASE DE DATOS 1: POSTGRES (Para App 1)
-# ---------------------------------------------------------
-module "db_app1_postgres" {
-    source = "./modules/rds_database"
+# # BASE DE DATOS 1: POSTGRES (Para App 1)
+# # ---------------------------------------------------------
+# module "db_app1_postgres" {
+#     source = "./modules/rds_database"
 
-    project_name      = var.project_name
-    vpc_id            = module.vpc.vpc_id
-    public_subnet_ids = module.vpc.public_subnet_ids
+#     project_name      = var.project_name
+#     vpc_id            = module.vpc.vpc_id
+#     public_subnet_ids = module.vpc.public_subnet_ids
 
-    # Configuración específica para Postgres
-    identifier     = "${var.project_name}-postgres-app1"
-    engine         = "postgres"
-    engine_version = "14"       # Versión 14 de Postgres
-    family         = "postgres14"
-    db_port        = 5432
-    
-    db_name     = "app1_db"
-    db_username = "postgres"    # Usuario por defecto en Postgres
-    db_password = var.db_password
-    # Dependencia explícita
-    depends_on = [ module.vpc ]
-    }
+#     # Configuración específica para Postgres
+#     identifier     = "${var.project_name}-postgres-app1"
+#     engine         = "postgres"
+#     engine_version = "14"       # Versión 14 de Postgres
+#     family         = "postgres14"
+#     db_port        = 5432
+
+#     db_name     = "app1_db"
+#     db_username = "postgres"    # Usuario por defecto en Postgres
+#     db_password = var.db_password
+#     # Dependencia explícita
+#     depends_on = [ module.vpc ]
+    # }
 # ---------------------------------------------------------
 # BASE DE DATOS 2: MYSQL (Para App 2)
 # ---------------------------------------------------------
-module "db_app2_mysql" {
-    source = "./modules/rds_database"
+# module "db_app2_mysql" {
+#     source = "./modules/rds_database"
 
-    project_name      = var.project_name
-    vpc_id            = module.vpc.vpc_id
-    public_subnet_ids = module.vpc.public_subnet_ids
+#     project_name      = var.project_name
+#     vpc_id            = module.vpc.vpc_id
+#     public_subnet_ids = module.vpc.public_subnet_ids
 
-    # Configuración específica para MySQL
-    identifier     = "${var.project_name}-mysql-app2"
-    engine         = "mysql"
-    engine_version = "8.0"
-    family         = "mysql8.0"
-    db_port        = 3306
-    
-    db_name     = "app2_db"
-    db_username = "admin"
-    db_password = var.db_password
-    # Dependencia explícita
-    depends_on = [ module.vpc ]
-    }
-module "s3_cloudfront" {
-    source = "./modules/s3_cloudfront"
-    # --- LÓGICA CONDICIONAL (Requerimiento) ---
-    # Si la variable enabled_frontend es true, count es 1 (se crea).
-    # Si es false, count es 0 (se destruye/no se crea).
-    count = var.enabled_frontend ? 1 : 0
-    project_name = var.project_name
-    index_html_path = var.index_html_path
-    error_html_path = var.error_html_path
-    image_path      = var.image_path
-}
+#     # Configuración específica para MySQL
+#     identifier     = "${var.project_name}-mysql-app2"
+#     engine         = "mysql"
+#     engine_version = "8.0"
+#     family         = "mysql8.0"
+#     db_port        = 3306
+
+#     db_name     = "app2_db"
+#     db_username = "admin"
+#     db_password = var.db_password
+#     # Dependencia explícita
+#     depends_on = [ module.vpc ]
+#     }
+# module "s3_cloudfront" {
+#     source = "./modules/s3_cloudfront"
+#     # --- LÓGICA CONDICIONAL (Requerimiento) ---
+#     # Si la variable enabled_frontend es true, count es 1 (se crea).
+#     # Si es false, count es 0 (se destruye/no se crea).
+#     count = var.enabled_frontend ? 1 : 0
+#     project_name = var.project_name
+#     index_html_path = var.index_html_path
+#     error_html_path = var.error_html_path
+#     image_path      = var.image_path
+# }
 # --- 1. Security Group compartido para los servidores ---
 resource "aws_security_group" "servers_sg" {
-    # name        = "${var.project_name}-servers-sg"
-    # description = "Permite trafico web"
-    # vpc_id      = module.vpc.vpc_id
+    name        = "${var.project_name}-servers-sg"
+    description = "Permite trafico web"
+    vpc_id      = module.vpc.vpc_id
     # --- BUCLE FOR_EACH (Requerimiento) ---
     # Crea una regla de entrada por cada IP en la lista var.allowed_ips
     # dynamic "ingress" {
@@ -88,7 +88,7 @@ resource "aws_security_group" "servers_sg" {
     #   protocol    = "tcp"
     #   cidr_blocks = ["0.0.0.0/0"]
     # }
-    
+
     # # RDP para Windows
     # ingress {
     #   from_port   = 3389
@@ -96,7 +96,7 @@ resource "aws_security_group" "servers_sg" {
     #   protocol    = "tcp"
     #   cidr_blocks = ["0.0.0.0/0"]
     # }
-    
+
     # SSH para Linux
     ingress {
     from_port   = 22
@@ -110,7 +110,7 @@ resource "aws_security_group" "servers_sg" {
     to_port     = 0
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
-    } 
+    }
     tags = {
         Name = "AUY1105-${var.project_name}-servers-sg"
     }
