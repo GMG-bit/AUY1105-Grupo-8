@@ -132,17 +132,17 @@ module "app1_linux_compute" {
 # ---------------------------------------------------------
 # APP 2: WINDOWS (2 Instancias)
 # ---------------------------------------------------------
-module "app2_windows_compute" {
-    source = "./modules/compute"
-    project_name = var.project_name
-    vpc_id       = module.vpc.vpc_id
-    # Ponemos las instancias en la segunda subred pública
-    subnet_id          = module.vpc.public_subnet_ids[1]
-    security_group_ids = [aws_security_group.servers_sg.id]
-    # Lógica
-    os_type        = "windows"
-    instance_count = 2 # Valor fijo según requerimiento del diagrama
-}
+# module "app2_windows_compute" {
+#   source = "./modules/compute"
+#   project_name = var.project_name
+#   vpc_id       = module.vpc.vpc_id
+#   # Ponemos las instancias en la segunda subred pública
+#   subnet_id          = module.vpc.public_subnet_ids[1]
+#   security_group_ids = [aws_security_group.servers_sg.id]
+#   # Lógica
+#   os_type        = "windows"
+#   instance_count = 2 # Valor fijo según requerimiento del diagrama
+# }
 # ---------------------------------------------------------
 # BALANCEADOR DE CARGA APP 1 (LINUX)
 # ---------------------------------------------------------
@@ -159,15 +159,15 @@ module "alb_app1" {
 # ---------------------------------------------------------
 # BALANCEADOR DE CARGA APP 2 (WINDOWS)
 # ---------------------------------------------------------
-module "alb_app2" {
-    source = "./modules/alb"
-    project_name = var.project_name
-    vpc_id       = module.vpc.vpc_id
-    subnet_ids   = module.vpc.public_subnet_ids
-    app_name     = "app2-windows"
-    # Le pasamos los IDs que salen del módulo de cómputo Windows
-    instance_ids = module.app2_windows_compute.instance_ids
-}
+# module "alb_app2" {
+#   source = "./modules/alb"
+#   project_name = var.project_name
+#   vpc_id       = module.vpc.vpc_id
+#   subnet_ids   = module.vpc.public_subnet_ids
+#   app_name     = "app2-windows"
+#   # Le pasamos los IDs que salen del módulo de cómputo Windows
+#   instance_ids = module.app2_windows_compute.instance_ids
+# }
 # module "backend_servers" {
 #   source = "./modules/backend_servers"
 
