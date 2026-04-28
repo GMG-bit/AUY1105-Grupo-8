@@ -43,7 +43,6 @@ resource "aws_instance" "server" {
   monitoring           = true
   iam_instance_profile = "LabInstanceProfile"
   vpc_security_group_ids = var.security_group_ids
-# ASIGNACIÓN CLAVE: Aquí conectamos el script con la instancia
   user_data = local.user_data_linux
   # Fuerza IMDSv2 (deshabilita IMDSv1)
   metadata_options {
@@ -62,13 +61,14 @@ resource "aws_instance" "server" {
   }
 }
 locals {
-    user_data_linux = <<-EOF
+  user_data_linux = <<-EOF
     #!/bin/bash
     apt-get update -y
-    apt-get install nginx -y
+    apt-get install -y nginx git
     systemctl start nginx
     systemctl enable nginx
-    # Escribimos el contenido de tu index.html en la ruta de Nginx
-    echo '${var.html_content}' > /var/www/html/index.html
+    git clone --depth 1 https://github.com/GMG-bit/AUY1105-Grupo-8.git /tmp/repo
+    cp -r "/tmp/repo/Sitio Generico/html/." /var/www/html/
+    rm -rf /tmp/repo
   EOF
-  }
+}

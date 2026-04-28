@@ -76,6 +76,5 @@ module "app1_linux_compute" {
   security_group_ids = [aws_security_group.servers_sg.id]
   os_type            = "linux"
   instance_count     = var.instance_count_app1
-  html_content = file("${path.module}/Sitio Generico/html/index.html")
   key_name           = var.key_name
 }
