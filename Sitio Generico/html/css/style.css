@@ -579,9 +579,11 @@ ul.sign li a i {
 }
 
 .ban_img figure {
-     display: flex;
+     /* display: flex; */
+     height: auto;
+     width: 200%;
      margin: 0;
-}
+     padding: left,top}
 
 
 /** end banner section **/
