@@ -39,3 +39,11 @@ jobs:
         run: terraform init -backend=false
       - name: Terraform Validate
         run: terraform validate
+
+      # 4. Validación de políticas de seguridad con OPA
+      - name: Setup OPA
+        uses: open-policy-agent/setup-opa@v2
+        with:
+          version: latest
+      - name: Run OPA Policy Tests
+        run: opa test policies/ -v
