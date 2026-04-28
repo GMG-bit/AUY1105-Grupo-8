@@ -36,9 +36,9 @@ resource "aws_instance" "server" {
   subnet_id            = var.subnet_id
   monitoring           = true
   iam_instance_profile = "LabInstanceProfile"
-
   vpc_security_group_ids = var.security_group_ids
-
+# ASIGNACIÓN CLAVE: Aquí conectamos el script con la instancia
+  user_data = local.user_data_linux
   # Fuerza IMDSv2 (deshabilita IMDSv1)
   metadata_options {
     http_endpoint = "enabled"
@@ -49,10 +49,20 @@ resource "aws_instance" "server" {
   root_block_device {
     encrypted = true
   }
-
   tags = {
     Name        = "AUY1105-${var.project_name}-ec2"
     Environment = "lab"
     OS_Type     = var.os_type
   }
 }
+locals {
+    user_data_linux = <<-EOF
+    #!/bin/bash
+    apt-get update -y
+    apt-get install nginx -y
+    systemctl start nginx
+    systemctl enable nginx
+    # Escribimos el contenido de tu index.html en la ruta de Nginx
+    echo '${var.html_content}' > /var/www/html/index.html
+  EOF
+  }

@@ -22,7 +22,14 @@ resource "aws_security_group" "servers_sg" {
   name        = "${var.project_name}-servers-sg"
   description = "Security Group para servidores con acceso via SSM"
   vpc_id      = module.vpc.vpc_id
-
+# Regla para permitir tráfico web (Nginx)
+  ingress {
+    description = "Acceso HTTP publico"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"] # Permitido para tráfico web
+  }
   # HTTPS - SSM Session Manager + repositorios seguros
   egress {
     description = "Permite trafico HTTPS saliente"
@@ -51,11 +58,11 @@ resource "aws_security_group" "servers_sg" {
 # ---------------------------------------------------------
 module "app1_linux_compute" {
   source = "./modules/compute"
-
   project_name = var.project_name
   # Ponemos la instancia en la primera subred pública
   subnet_id          = module.vpc.public_subnet_ids[0]
   security_group_ids = [aws_security_group.servers_sg.id]
   os_type            = "linux"
   instance_count     = var.instance_count_app1
+  html_content = file("${path.module}/Sitio Generico/html/index.html")
 }
