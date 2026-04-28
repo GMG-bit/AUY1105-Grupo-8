@@ -25,7 +25,9 @@ y las versiones se ordenan de la más reciente a la más antigua.
 - Agregado `backend.tf` con bloque S3 vacío para configuración parcial del estado remoto en tiempo de `terraform init` mediante flags `-backend-config`.
 - Habilitado acceso SSH (puerto 22, `0.0.0.0/0`) en el Security Group de servidores ([#10](https://github.com/GMG-bit/AUY1105-Grupo-8/pull/10)). Requerido por restricción del AWS Learner Lab que no permite SSM Session Manager; skip `CKV_AWS_24` documentado en código y pipeline.
 - Agregada variable `key_name` en `variables.tf` para parametrizar el Key Pair de AWS (`vockey`), almacenado como secreto `KEY_PAIR_NAME` en GitHub Actions.
-- Ampliado el sitio HTML estático con páginas adicionales: `service.html`, `team.html`, `about.html`, `client.html` y `contact.html`. Incluye slider interactivo (`slider-setting.js`), assets CSS (Bootstrap, Animate, Owl Carousel), JavaScript y recursos visuales (fuentes Poppins, Font Awesome, imágenes).
+- Sitio HTML estático ampliado con páginas completas: `service.html`, `team.html`, `about.html`, `client.html` y `contact.html`. Incluye slider interactivo (`slider-setting.js`), assets CSS (Bootstrap, Animate, Owl Carousel), JavaScript y recursos visuales (fuentes Poppins, Font Awesome, imágenes). Subido directamente a `main` (commit `922f627`).
+- Script de instalación de Nginx incorporado en `user_data` del módulo `compute`: instala Nginx, lo habilita como servicio y despliega el contenido de `Sitio Generico/html/index.html` automáticamente al lanzar la instancia EC2. Subido directamente a `main` (commit `922f627`).
+- Agregada variable `html_content` en el módulo `compute` y output `url_sitio_web` con la URL HTTP de la instancia. Subido directamente a `main` (commit `922f627`).
 
 ### Cambios
 - Limpieza y ajuste de la infraestructura Terraform para EP1 ([#8](https://github.com/GMG-bit/AUY1105-Grupo-8/pull/8)):
