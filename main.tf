@@ -19,8 +19,9 @@ module "vpc" {
 # ---------------------------------------------------------
 # Security Group compartido para los servidores
 resource "aws_security_group" "servers_sg" {
+  #checkov:skip=CKV_AWS_24:Puerto 22 habilitado para acceso SSH directo - SSM no disponible en AWS Learner Lab
   name        = "${var.project_name}-servers-sg"
-  description = "Security Group para servidores con acceso via SSM"
+  description = "Security Group para servidores con acceso SSH y egreso web"
   vpc_id      = module.vpc.vpc_id
 # Regla para permitir tráfico web (Nginx)
   ingress {
@@ -31,6 +32,16 @@ resource "aws_security_group" "servers_sg" {
     cidr_blocks = ["0.0.0.0/0"] # Permitido para tráfico web
   }
   # HTTPS - SSM Session Manager + repositorios seguros
+
+  ingress {
+    description = "SSH publico - requerido en Learner Lab (SSM no disponible)"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # HTTPS - repositorios seguros
   egress {
     description = "Permite trafico HTTPS saliente"
     from_port   = 443
@@ -65,4 +76,5 @@ module "app1_linux_compute" {
   os_type            = "linux"
   instance_count     = var.instance_count_app1
   html_content = file("${path.module}/Sitio Generico/html/index.html")
+  key_name           = var.key_name
 }

@@ -12,6 +12,11 @@ variable "instance_count" {
   type        = number
 }
 
+variable "key_name" {
+  description = "Nombre del Key Pair de AWS para acceso SSH"
+  type        = string
+}
+
 # --- 1. Selección de AMI ---
 
 # Buscar la última AMI de Ubuntu 24.04 LTS (Noble)
@@ -34,6 +39,7 @@ resource "aws_instance" "server" {
   ami                  = data.aws_ami.ubuntu.id
   instance_type        = "t2.micro"
   subnet_id            = var.subnet_id
+  key_name             = var.key_name
   monitoring           = true
   iam_instance_profile = "LabInstanceProfile"
   vpc_security_group_ids = var.security_group_ids

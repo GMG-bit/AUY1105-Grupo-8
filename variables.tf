@@ -26,3 +26,8 @@ variable "instance_count_app1" {
   type        = number
   default     = 1
 }
+
+variable "key_name" {
+  description = "Nombre del Key Pair de AWS para acceso SSH a las instancias"
+  type        = string
+}
