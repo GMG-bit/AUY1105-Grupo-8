@@ -31,7 +31,8 @@ jobs:
           skip_check: >-
             CKV_AWS_135,
             CKV_AWS_130,
-            CKV_AWS_24
+            CKV_AWS_24,
+            CKV_AWS_260
 
       - name: Terraform Init (sin backend)
         run: terraform init -backend=false

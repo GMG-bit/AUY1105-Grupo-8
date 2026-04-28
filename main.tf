@@ -25,6 +25,7 @@ resource "aws_security_group" "servers_sg" {
   vpc_id      = module.vpc.vpc_id
 # Regla para permitir tráfico web (Nginx)
   ingress {
+    #checkov:skip=CKV_AWS_260:Puerto 80 habilitado para todo el publico, para verificar pagina web
     description = "Acceso HTTP publico"
     from_port   = 80
     to_port     = 80
