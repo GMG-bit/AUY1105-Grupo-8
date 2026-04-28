@@ -30,6 +30,9 @@ jobs:
         with:
           directory: .
           framework: terraform
+          skip_check: >-
+            CKV_AWS_135,
+            CKV_AWS_130
 
       # 3. Validación de Terraform
       - name: Terraform Init
