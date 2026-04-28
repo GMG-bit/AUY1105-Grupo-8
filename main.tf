@@ -19,27 +19,25 @@ module "vpc" {
 # ---------------------------------------------------------
 # Security Group compartido para los servidores
 resource "aws_security_group" "servers_sg" {
-  #checkov:skip=CKV_AWS_24:SSH desde 0.0.0.0/0 requerido para acceso al lab
-  #checkov:skip=CKV_AWS_382:Egress irrestricto requerido para conectividad del lab
   name        = "${var.project_name}-servers-sg"
-  description = "Permite trafico SSH"
+  description = "Security Group para servidores con acceso via SSM"
   vpc_id      = module.vpc.vpc_id
 
-  # SSH para Linux
-  ingress {
-    description = "Permite trafico SSH"
-    from_port   = 22
-    to_port     = 22
+  # HTTPS - SSM Session Manager + repositorios seguros
+  egress {
+    description = "Permite trafico HTTPS saliente"
+    from_port   = 443
+    to_port     = 443
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  # Permite toda la salida
+  # HTTP - repositorios de paquetes
   egress {
-    description = "Permite todo el trafico saliente"
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
+    description = "Permite trafico HTTP saliente"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
 

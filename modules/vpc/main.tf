@@ -6,8 +6,6 @@ data "aws_availability_zones" "available" {
 
 # 1. Crear la VPC
 resource "aws_vpc" "main" {
-  #checkov:skip=CKV2_AWS_11:VPC Flow Logs requiere permisos IAM no disponibles en Learner Lab
-  #checkov:skip=CKV2_AWS_12:Default SG controlado por recurso aws_default_security_group
   cidr_block           = var.vpc_cidr_block
   enable_dns_support   = true
   enable_dns_hostnames = true
@@ -52,7 +50,7 @@ resource "aws_route_table" "public" {
 
 # 4. Crear las Subredes Públicas (usamos count para crear varias)
 resource "aws_subnet" "public" {
-  #checkov:skip=CKV_AWS_130:IP publica requerida para acceso SSH al lab
+  #checkov:skip=CKV_AWS_130:Arquitectura del curso requiere instancias en subnet publica con IP publica
   count = length(var.public_subnet_cidrs)
 
   vpc_id            = aws_vpc.main.id
@@ -68,7 +66,23 @@ resource "aws_subnet" "public" {
   }
 }
 
-# 5. Asociar la Tabla de Rutas con las Subredes
+# 5. VPC Flow Logs (auditoría de tráfico de red)
+data "aws_iam_role" "lab_role" {
+  name = "LabRole"
+}
+
+resource "aws_cloudwatch_log_group" "vpc_flow_logs" {
+  name = "/aws/vpc/${var.project_name}-flow-logs"
+}
+
+resource "aws_flow_log" "main" {
+  vpc_id          = aws_vpc.main.id
+  traffic_type    = "ALL"
+  iam_role_arn    = data.aws_iam_role.lab_role.arn
+  log_destination = aws_cloudwatch_log_group.vpc_flow_logs.arn
+}
+
+# 6. Asociar la Tabla de Rutas con las Subredes
 # Esto "activa" la ruta a internet para nuestras subredes
 resource "aws_route_table_association" "public" {
   count = length(aws_subnet.public)

@@ -28,7 +28,7 @@ data "aws_ami" "ubuntu" {
 # --- 2. Creación de Instancias ---
 
 resource "aws_instance" "server" {
-  #checkov:skip=CKV_AWS_135:t2.micro no soporta EBS optimization
+  #checkov:skip=CKV_AWS_135:La politica OPA del proyecto exige t2.micro, el cual no soporta EBS optimization
   count = var.instance_count
 
   ami                  = data.aws_ami.ubuntu.id
