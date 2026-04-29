@@ -8,6 +8,12 @@
 
 Infraestructura como Código (IaC) con Terraform para el despliegue automatizado de una VPC, instancias EC2 con Nginx y VPC Flow Logs en AWS, desarrollada como parte de la Evaluación Parcial N°1 de la asignatura **AUY1105 – Infraestructura como Código II**.
 
+## 👥 Integrantes
+
+- [@GMG-bit](https://github.com/GMG-bit) — Gaston Mardones
+- [@BenjaminDuran](https://github.com/BenjaminDuran) — BenjaminDuran
+- [@pacontrerasj](https://github.com/pacontrerasj) — Pablo Contreras
+
 ## Características principales
 
 - VPC con dos subredes públicas en distintas zonas de disponibilidad e Internet Gateway.
