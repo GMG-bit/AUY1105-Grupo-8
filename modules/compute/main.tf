@@ -1,74 +1,51 @@
-variable "project_name" {}
-variable "subnet_id" { description = "ID de la subred donde se alojará la instancia" }
-variable "security_group_ids" { type = list(string) }
-
-variable "os_type" {
-  description = "Sistema Operativo: 'linux'"
-  type        = string
-}
-
-variable "instance_count" {
-  description = "Cantidad de instancias a crear"
-  type        = number
-}
-
-variable "key_name" {
-  description = "Nombre del Key Pair de AWS para acceso SSH"
-  type        = string
-}
-
-# --- 1. Selección de AMI ---
-
-# Buscar la última AMI de Ubuntu 24.04 LTS (Noble)
-data "aws_ami" "ubuntu" {
-  most_recent = true
-  owners      = ["099720109477"] # ID oficial de Canonical
-
-  filter {
-    name   = "name"
-    values = ["ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server-*"]
-  }
-}
-
-# --- 2. Creación de Instancias ---
-
-resource "aws_instance" "server" {
-  #checkov:skip=CKV_AWS_135:La politica OPA del proyecto exige t2.micro, el cual no soporta EBS optimization
-  count = var.instance_count
-
-  ami                  = data.aws_ami.ubuntu.id
-  instance_type        = "t2.micro"
-  subnet_id            = var.subnet_id
-  key_name             = var.key_name
-  monitoring           = true
-  iam_instance_profile = "LabInstanceProfile"
+# Launch Template: Define cómo serán las instancias del ASG
+resource "aws_launch_template" "app_lt" {
+  name_prefix   = "${var.project_name}-template-"
+  image_id      = "ami-0e2c8caa4b6378d8c" # Tu AMI de Ubuntu 24.04
+  instance_type = "t2.micro"
+  key_name               = var.key_name
   vpc_security_group_ids = var.security_group_ids
-  user_data = local.user_data_linux
-  # Fuerza IMDSv2 (deshabilita IMDSv1)
-  metadata_options {
-    http_endpoint = "enabled"
-    http_tokens   = "required"
-  }
 
-  # Disco raíz cifrado
-  root_block_device {
-    encrypted = true
-  }
-  tags = {
-    Name        = "AUY1105-${var.project_name}-ec2"
-    Environment = "lab"
-    OS_Type     = var.os_type
+  # USER DATA: Instalación automatizada de Docker para el futuro
+  user_data = base64encode(<<-EOF
+              #!/bin/bash
+              apt-get update -y
+              apt-get install -y apt-transport-https ca-certificates curl software-properties-common
+              curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
+              add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+              apt-get update -y
+              apt-get install -y docker-ce
+              systemctl start docker
+              systemctl enable docker
+              
+              # Test temporal para que el ALB pase el Health Check (Nginx en Docker)
+              docker run -d -p 80:80 nginx
+              EOF
+  )
+  lifecycle {
+    create_before_destroy = true
   }
 }
-locals {
-  user_data_linux = <<-EOF
-    #!/bin/bash
-    apt-get update -y
-    apt-get install -y nginx git
-    systemctl start nginx
-    systemctl enable nginx
-    git clone --depth 1 https://github.com/GMG-bit/AUY1105-Grupo-8.git /tmp/repo
-    cp -r "/tmp/repo/Sitio Generico/html/." /var/www/html/
-    rm -rf /tmp/repo
-  EOF
+# Auto Scaling Group
+resource "aws_autoscaling_group" "app_asg" {
+  name                = "${var.project_name}-asg"
+  vpc_zone_identifier = var.subnet_ids # Subnets públicas de la VPC
+  target_group_arns   = [var.target_group_arn] # Vinculación automática al ALB
+
+  desired_capacity          = var.desired_capacity
+  min_size                  = var.min_size
+  max_size                  = var.max_size
+  health_check_type         = "ELB" # El ASG confía en los health checks del ALB
+  health_check_grace_period = 300
+
+  launch_template {
+    id      = aws_launch_template.app_lt.id
+    version = "$Latest"
+  }
+
+  tag {
+    key                 = "Name"
+    value               = "${var.project_name}-asg-worker"
+    propagate_at_launch = true
+  }
 }
