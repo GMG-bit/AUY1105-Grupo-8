@@ -9,3 +9,7 @@ output "public_subnet_ids" {
   # Esto genera una lista con los IDs de todas las subredes creadas por el "count"
   value = aws_subnet.public[*].id
 }
+output "private_subnet_ids" {
+  description = "IDs de las subredes privadas creadas"
+  value       = aws_subnet.private[*].id
+}

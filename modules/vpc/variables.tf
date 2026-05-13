@@ -13,3 +13,7 @@ variable "public_subnet_cidrs" {
   description = "Lista de rangos de IPs para las subredes públicas"
   type        = list(string)
 }
+variable "private_subnet_cidrs" {
+  description = "Lista de rangos de IPs para las subredes privadas"
+  type        = list(string)
+}

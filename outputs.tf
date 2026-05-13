@@ -18,3 +18,7 @@ output "url_sitio_web" {
   # Construye la URL usando las IPs que vienen del módulo de cómputo
   value = [for ip in module.app1_linux_compute.instance_ips : "http://${ip}"]
 }
+output "database_endpoint" {
+  description = "Endpoint de conexion para la base de datos PostgreSQL"
+  value       = module.database.db_endpoint
+}

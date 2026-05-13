@@ -6,6 +6,7 @@ module "vpc" {
   project_name        = var.project_name
   vpc_cidr_block      = var.vpc_cidr_block
   public_subnet_cidrs = var.public_subnet_cidrs
+  private_subnet_cidrs = var.private_subnet_cidrs # Agregado para permitir la creación de subredes privadas
 }
 
 # 2. Grupo de Seguridad para los servidores
@@ -58,4 +59,14 @@ module "app1_linux_compute" {
   desired_capacity   = 1
   min_size           = 1
   max_size           = 2 # Ajustado para no saturar los límites de tu Learner Lab
+}
+# ---------------------------------------------------------
+# DATABASE (PostgreSQL Multi-AZ)
+# ---------------------------------------------------------
+module "database" {
+  source                = "./modules/database"
+  project_name          = var.project_name
+  vpc_id                = module.vpc.vpc_id
+  private_subnet_ids    = module.vpc.private_subnet_ids # Usamos las subnets privadas para la base de datos
+  ec2_security_group_id = aws_security_group.servers_sg.id # Crucial para permitir el tráfico EC2 -> DB
 }
