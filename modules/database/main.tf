@@ -18,7 +18,7 @@ resource "aws_db_instance" "postgres" {
   
   db_name              = "appdb"
   username             = "dbadmin"
-  password             = "PasswordSeguro789!"
+  password             = "Duoc.1234" # En producción, usar un método seguro para manejar credenciales
   
   db_subnet_group_name   = aws_db_subnet_group.postgres_subnet_group.name
   vpc_security_group_ids = [aws_security_group.db_sg.id]

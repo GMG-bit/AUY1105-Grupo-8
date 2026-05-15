@@ -167,3 +167,22 @@ resource "aws_route_table_association" "private" {
   subnet_id      = aws_subnet.private[count.index].id
   route_table_id = aws_route_table.private.id
 }
+resource "aws_security_group" "db_sg" {
+  name        = "${var.project_name}-db-sg"
+  vpc_id      = aws_vpc.main.id
+
+  # Permitir tráfico desde el Security Group de los servidores (ASG)
+  ingress {
+    description     = "Acceso PostgreSQL desde los servidores"
+    from_port       = 5432
+    to_port         = 5432
+    protocol        = "tcp"
+    security_groups = [aws_security_group.servers_sg.id] # Referencia al SG de los servidores
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+}

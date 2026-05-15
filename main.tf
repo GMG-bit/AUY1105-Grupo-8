@@ -20,7 +20,7 @@ resource "aws_security_group" "servers_sg" {
     from_port       = 80
     to_port         = 80
     protocol        = "tcp"
-    security_groups = [module.LoadBalancer.alb_sg_id] 
+    security_groups = [module.balanceador.alb_sg] # Referencia dinámica al SG del ALB
   }
 
   ingress {
