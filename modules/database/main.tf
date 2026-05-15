@@ -1,7 +1,7 @@
 # El Subnet Group ahora apunta a las subredes privadas
 resource "aws_db_subnet_group" "postgres_subnet_group" {
   name        = "${var.project_name}-db-subnet-group"
-  subnet_ids  = var.private_subnet_ids # <--- Usar las subredes privadas
+  subnet_ids  = var.private_subnet_ids
   description = "Grupo de subredes privadas para PostgreSQL"
 
   tags = {
@@ -26,7 +26,6 @@ resource "aws_db_instance" "postgres" {
   multi_az               = true
   
   # CRUCIAL: Al estar en subredes privadas, debe ser falso.
-  # AWS no te permitirá poner 'true' si las subredes no tienen ruta directa a un IGW.
   publicly_accessible    = false 
 
   skip_final_snapshot    = true
@@ -34,5 +33,26 @@ resource "aws_db_instance" "postgres" {
 
   tags = {
     Name = "${var.project_name}-database"
+  }
+}
+
+resource "aws_security_group" "db_sg" {
+  name        = "${var.project_name}-db-sg"
+  vpc_id      = var.vpc_id # Usamos la variable en lugar de la referencia directa
+
+  # Permitir tráfico desde el Security Group de los servidores (ASG)
+  ingress {
+    description     = "Acceso PostgreSQL desde los servidores"
+    from_port       = 5432
+    to_port         = 5432
+    protocol        = "tcp"
+    security_groups = [var.ec2_security_group_id] # Usamos la variable ec2_security_group_id
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 }

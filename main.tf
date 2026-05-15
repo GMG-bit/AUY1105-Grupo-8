@@ -20,15 +20,15 @@ resource "aws_security_group" "servers_sg" {
     from_port       = 80
     to_port         = 80
     protocol        = "tcp"
-    security_groups = [module.balanceador.alb_sg] # Referencia dinámica al SG del ALB
+    security_groups = [module.balanceador.alb_sg_id] # Referencia dinámica al SG del ALB
   }
 
   ingress {
-    description = "SSH publico - requerido en Learner Lab"
+    description = "SSH publico - gestionado por variable"
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = [var.ssh_allowed_cidr]
   }
 
   egress {

@@ -31,3 +31,9 @@ variable "key_name" {
   description = "Nombre del Key Pair de AWS para acceso SSH a las instancias"
   type        = string
 }
+
+variable "ssh_allowed_cidr" {
+  description = "CIDR permitido para acceso SSH. Por defecto abierto a todos, pero fácil de cambiar."
+  type        = string
+  default     = "0.0.0.0/0"
+}
