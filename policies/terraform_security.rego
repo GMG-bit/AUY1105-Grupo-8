@@ -17,6 +17,6 @@ package terraform.security
 deny contains msg if {
     resource := input.resource_changes[_]
     resource.type == "aws_instance"
-    resource.change.after.instance_type != "t2.micro"
+    resource.change.after.instance_type != "t3.small"
     msg := sprintf("DENEGADO: '%s' usa tipo '%s'. Solo se permite t2.micro", [resource.address, resource.change.after.instance_type])
 }

@@ -2,7 +2,7 @@
 resource "aws_launch_template" "app_lt" {
   name_prefix   = "${var.project_name}-template-"
   image_id      = "ami-0e2c8caa4b6378d8c" # Tu AMI de Ubuntu 24.04
-  instance_type = "t2.micro"
+  instance_type = "t3.small"
   key_name               = var.key_name
   vpc_security_group_ids = var.security_group_ids
 
