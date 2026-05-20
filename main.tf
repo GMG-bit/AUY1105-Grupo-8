@@ -56,9 +56,9 @@ module "app1_linux_compute" {
   key_name           = var.key_name
   target_group_arn   = module.balanceador.target_group_arn # Conexión dinámica ASG -> ALB
 
-  desired_capacity   = 1
-  min_size           = 1
-  max_size           = 2 # Ajustado para no saturar los límites de tu Learner Lab
+  desired_capacity   = 2
+  min_size           = 2
+  max_size           = 4 # Ajustado según requerimiento de escalabilidad
 }
 # ---------------------------------------------------------
 # DATABASE (PostgreSQL Multi-AZ)
