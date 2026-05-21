@@ -25,29 +25,29 @@ La solución implementa una infraestructura premium de tres capas distribuida de
 ```mermaid
 graph TD
     subgraph Internet
-        User([Cliente Web])
+        User(["Cliente Web"])
     end
 
     subgraph VPC - 10.1.0.0/16
         subgraph Capa de Entrada
-            ALB[Application Load Balancer - Puertos 80/443]
+            ALB["Application Load Balancer - Puertos 80/443"]
         end
 
         subgraph Capa de Computo - AZ 1a
-            SubnetPubA[Subred Publica 1a] --> EC2A[EC2 t3.small - Nginx Docker]
-            EC2A --> CWAgentA[CloudWatch Agent]
+            SubnetPubA["Subred Publica 1a"] --> EC2A["EC2 t3.small - Nginx Docker"]
+            EC2A --> CWAgentA["CloudWatch Agent"]
         end
 
         subgraph Capa de Computo - AZ 1b
-            SubnetPubB[Subred Publica 1b] --> EC2B[EC2 t3.small - Nginx Docker]
-            EC2B --> CWAgentB[CloudWatch Agent]
+            SubnetPubB["Subred Publica 1b"] --> EC2B["EC2 t3.small - Nginx Docker"]
+            EC2B --> CWAgentB["CloudWatch Agent"]
         end
 
         subgraph Capa de Datos - Subredes Privadas
-            RDSPrimary[(RDS MySQL Primary - AZ 1a)] <--> RDSStandby[(RDS MySQL Standby - AZ 1b)]
+            RDSPrimary[("RDS MySQL Primary - AZ 1a")] <--> RDSStandby[("RDS MySQL Standby - AZ 1b")]
         end
         
-        NAT[NAT Gateway] --> SubnetPubA
+        NAT["NAT Gateway"] --> SubnetPubA
     end
 
     User --> ALB
@@ -57,15 +57,15 @@ graph TD
     EC2B -->|Conexion Puerto 3306| RDSPrimary
 
     subgraph AWS Management & DR
-        CW[Amazon CloudWatch - Metrics & Dashboard]
-        SNS[Amazon SNS - Alertas por Correo]
-        Backup[AWS Backup - Respaldo Diario]
+        CW["Amazon CloudWatch - Metrics & Dashboard"]
+        SNS["Amazon SNS - Alertas por Correo"]
+        Backup["AWS Backup - Respaldo Diario"]
     end
 
     CWAgentA -->|Métricas RAM/CPU/Disco| CW
     CWAgentB -->|Métricas RAM/CPU/Disco| CW
     CW -->|Alerta >70%| SNS
-    SNS -->|Notificacion| Email[gas.mardones@duocuc.cl]
+    SNS -->|Notificacion| Email["gas.mardones@duocuc.cl"]
     Backup -->|Snapshot Diario| EC2A
     Backup -->|Snapshot Diario| EC2B
     Backup -->|Snapshot Diario| RDSPrimary
