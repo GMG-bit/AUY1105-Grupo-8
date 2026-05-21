@@ -4,21 +4,26 @@ output "vpc_id" {
 }
 
 output "public_subnet_ids" {
-  description = "IDs de las subredes públicas"
+  description = "IDs de las subredes publicas"
   value       = module.vpc.public_subnet_ids
 }
 
-output "app1_linux_ips" {
-  description = "IPs públicas de los servidores Linux"
-  value       = module.app1_linux_compute.instance_ips
+output "private_subnet_ids" {
+  description = "IDs de las subredes privadas"
+  value       = module.vpc.private_subnet_ids
+}
+
+output "alb_dns_name" {
+  description = "El nombre de dominio DNS publico del balanceador de carga"
+  value       = module.balanceador.alb_dns_name
 }
 
 output "url_sitio_web" {
-  description = "URL para acceder al servidor Nginx"
-  # Construye la URL usando las IPs que vienen del módulo de cómputo
-  value = [for ip in module.app1_linux_compute.instance_ips : "http://${ip}"]
+  description = "URL principal para acceder al sitio de e-commerce de TechNova a traves del ALB"
+  value       = "http://${module.balanceador.alb_dns_name}"
 }
+
 output "database_endpoint" {
-  description = "Endpoint de conexion para la base de datos PostgreSQL"
+  description = "Endpoint de conexion para la base de datos MySQL Multi-AZ"
   value       = module.database.db_endpoint
 }

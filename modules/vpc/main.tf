@@ -50,9 +50,9 @@ resource "aws_subnet" "public" {
   #checkov:skip=CKV_AWS_130:Arquitectura del curso requiere instancias en subnet publica con IP publica
   count = length(var.public_subnet_cidrs)
 
-  vpc_id            = aws_vpc.main.id
+  vpc_id = aws_vpc.main.id
   # Asigna el CIDR correspondiente a cada subred según su índice
-  cidr_block        = var.public_subnet_cidrs[count.index]
+  cidr_block = var.public_subnet_cidrs[count.index]
   # Asigna una AZ distinta a cada subred
   availability_zone = data.aws_availability_zones.available.names[count.index]
   # Hace que las instancias en esta subred obtengan IP pública automáticamente
@@ -116,7 +116,7 @@ resource "aws_flow_log" "main" {
 # 6. Asociar la Tabla de Rutas con las Subredes
 # Esto "activa" la ruta a internet para nuestras subredes
 resource "aws_route_table_association" "public" {
-  count = length(aws_subnet.public)
+  count          = length(aws_subnet.public)
   subnet_id      = aws_subnet.public[count.index].id
   route_table_id = aws_route_table.public.id
 }
