@@ -41,6 +41,18 @@ resource "aws_launch_template" "app_lt" {
               apt-get update -y
               apt-get install -y apt-transport-https ca-certificates curl software-properties-common wget gnupg2 unzip
 
+              # --- CONFIGURACION DE MEMORIA SWAP (1 GB) ---
+              # 1. Crear un archivo vacio de 1GB asignando espacio del SSD
+              fallocate -l 1G /swapfile
+              # 2. Restringir permisos de lectura y escritura exclusivamente a root por seguridad
+              chmod 600 /swapfile
+              # 3. Formatear el archivo como sistema de archivos de intercambio
+              mkswap /swapfile
+              # 4. Activar el espacio swap inmediatamente en el kernel
+              swapon /swapfile
+              # 5. Agregar el registro de montaje al fstab para mantenerlo persistente tras reinicios
+              echo '/swapfile swap swap defaults 0 0' >> /etc/fstab
+
               # 1. Instalar Docker
               curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
               echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \$(lsb_release -cs) stable" > /etc/apt/sources.list.d/docker.list

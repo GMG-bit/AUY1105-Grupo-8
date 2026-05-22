@@ -74,10 +74,12 @@ jobs:
             -backend-config="region=us-east-1"
 
       - name: Terraform Plan
+        env:
+          TF_VAR_subscription_email: ${{ secrets.SUBSCRIPTION_EMAIL }}
+          TF_VAR_ssh_allowed_ip: ${{ secrets.SSH_ALLOWED_IP }}
+          TF_VAR_project_name: ${{ vars.PROJECT_NAME }}
+          TF_VAR_key_name: ${{ secrets.KEY_PAIR_NAME }}
         run: |
-          terraform plan -out=tfplan \
-            -var "project_name=${{ vars.PROJECT_NAME }}" \
-            -var "key_name=${{ secrets.KEY_PAIR_NAME }}"
-
+          terraform plan -out=tfplan
       - name: Terraform Apply
         run: terraform apply -auto-approve tfplan
