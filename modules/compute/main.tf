@@ -72,18 +72,18 @@ resource "aws_launch_template" "app_lt" {
 
               # 4. Obtener metadatos de la instancia mediante IMDSv2
               TOKEN=$(curl -s -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
-              INSTANCE_ID=$(curl -s -H "X-aws-ec2-metadata-token: \$TOKEN" http://169.254.169.254/latest/meta-data/instance-id)
-              PRIVATE_IP=$(curl -s -H "X-aws-ec2-metadata-token: \$TOKEN" http://169.254.169.254/latest/meta-data/local-ipv4)
-              AZ=$(curl -s -H "X-aws-ec2-metadata-token: \$TOKEN" http://169.254.169.254/latest/meta-data/placement/availability-zone)
+              INSTANCE_ID=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/instance-id)
+              PRIVATE_IP=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/local-ipv4)
+              AZ=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/placement/availability-zone)
 
               # 5. Diseñar e inyectar el Banner Flotante Premium para demostrar el Balanceo de Carga
-              BANNER_HTML="<div style='background:linear-gradient(135deg, #623CE4 0%, #4A2CB3 100%);color:#ffffff;text-align:center;padding:12px;font-size:15px;font-family:sans-serif;position:sticky;top:0;left:0;width:100%;z-index:99999;box-shadow:0 4px 15px rgba(0,0,0,0.2);display:flex;justify-content:center;align-items:center;gap:20px;'><span>⚡ <strong>TechNova Server</strong></span><span>🆔 ID Instancia: <code style='background:rgba(255,255,255,0.25);padding:2px 6px;border-radius:4px;'>\$INSTANCE_ID</code></span><span>🔌 IP Privada: <code style='background:rgba(255,255,255,0.25);padding:2px 6px;border-radius:4px;'>\$PRIVATE_IP</code></span><span>📍 Zona: <code style='background:rgba(255,255,255,0.25);padding:2px 6px;border-radius:4px;'>\$AZ</code></span></div>"
+              BANNER_HTML="<div style='background:linear-gradient(135deg, #623CE4 0%, #4A2CB3 100%);color:#ffffff;text-align:center;padding:12px;font-size:15px;font-family:sans-serif;position:sticky;top:0;left:0;width:100%;z-index:99999;box-shadow:0 4px 15px rgba(0,0,0,0.2);display:flex;justify-content:center;align-items:center;gap:20px;'><span>⚡ <strong>TechNova Server</strong></span><span>🆔 ID Instancia: <code style='background:rgba(255,255,255,0.25);padding:2px 6px;border-radius:4px;'>$INSTANCE_ID</code></span><span>🔌 IP Privada: <code style='background:rgba(255,255,255,0.25);padding:2px 6px;border-radius:4px;'>$PRIVATE_IP</code></span><span>📍 Zona: <code style='background:rgba(255,255,255,0.25);padding:2px 6px;border-radius:4px;'>$AZ</code></span></div>"
               
               # Reemplazar la etiqueta body inicial para agregar el banner al principio de todos los archivos HTML
-              sed -i 's|<body class="main-layout">|<body class="main-layout">'"\$BANNER_HTML"'|g' /var/www/html/*.html
+              sed -i 's|<body class="main-layout">|<body class="main-layout">'"$BANNER_HTML"'|g' /var/www/html/*.html
 
               # Reemplazar el placeholder de texto simple en la página de inicio
-              sed -i 's#<!-- BANNER_PLACEHOLDER -->#Servidor: '"\$INSTANCE_ID"'  |  IP Privada: '"\$PRIVATE_IP"'  |  Zona: '"\$AZ"'#g' /var/www/html/index.html
+              sed -i 's#<!-- BANNER_PLACEHOLDER -->#Servidor: '"$INSTANCE_ID"'  |  IP Privada: '"$PRIVATE_IP"'  |  Zona: '"$AZ"'#g' /var/www/html/index.html
 
               # 6. Levantar Nginx Dockerizado montando el directorio estatico modificado
               docker run -d -p 80:80 --name web_server -v /var/www/html:/usr/share/nginx/html nginx
