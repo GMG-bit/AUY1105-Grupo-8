@@ -27,11 +27,6 @@ variable "private_subnet_cidrs" {
   default     = ["10.1.11.0/24", "10.1.12.0/24"] # Ajustado para alinearse con la VPC (dentro del rango 10.1.0.0/16)
 }
 
-variable "instance_count_app1" {
-  description = "Cantidad de instancias para la App 1 (Linux)"
-  type        = number
-  default     = 2
-}
 
 variable "key_name" {
   description = "Nombre del Key Pair de AWS para acceso SSH a las instancias"
