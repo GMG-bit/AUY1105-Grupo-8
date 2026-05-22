@@ -79,8 +79,8 @@ resource "aws_launch_template" "app_lt" {
               # 5. Diseñar e inyectar el Banner Flotante Premium para demostrar el Balanceo de Carga
               BANNER_HTML="<div style='background:linear-gradient(135deg, #623CE4 0%, #4A2CB3 100%);color:#ffffff;text-align:center;padding:12px;font-size:15px;font-family:sans-serif;position:sticky;top:0;left:0;width:100%;z-index:99999;box-shadow:0 4px 15px rgba(0,0,0,0.2);display:flex;justify-content:center;align-items:center;gap:20px;'><span>⚡ <strong>TechNova Server</strong></span><span>🆔 ID Instancia: <code style='background:rgba(255,255,255,0.25);padding:2px 6px;border-radius:4px;'>\$INSTANCE_ID</code></span><span>🔌 IP Privada: <code style='background:rgba(255,255,255,0.25);padding:2px 6px;border-radius:4px;'>\$PRIVATE_IP</code></span><span>📍 Zona: <code style='background:rgba(255,255,255,0.25);padding:2px 6px;border-radius:4px;'>\$AZ</code></span></div>"
               
-              # Reemplazar la etiqueta <body> inicial para agregar el banner al principio de index.html
-              sed -i "s|<body>|<body>\$BANNER_HTML|g" /var/www/html/index.html
+              # Reemplazar la etiqueta body inicial para agregar el banner al principio de todos los archivos HTML
+              sed -i 's|<body class="main-layout">|<body class="main-layout">'"\$BANNER_HTML"'|g' /var/www/html/*.html
 
               # 6. Levantar Nginx Dockerizado montando el directorio estatico modificado
               docker run -d -p 80:80 --name web_server -v /var/www/html:/usr/share/nginx/html nginx
