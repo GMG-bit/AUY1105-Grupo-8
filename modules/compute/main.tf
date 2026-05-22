@@ -82,6 +82,9 @@ resource "aws_launch_template" "app_lt" {
               # Reemplazar la etiqueta body inicial para agregar el banner al principio de todos los archivos HTML
               sed -i 's|<body class="main-layout">|<body class="main-layout">'"\$BANNER_HTML"'|g' /var/www/html/*.html
 
+              # Reemplazar el placeholder de texto simple en la página de inicio
+              sed -i 's#<!-- BANNER_PLACEHOLDER -->#Servidor: '"\$INSTANCE_ID"'  |  IP Privada: '"\$PRIVATE_IP"'  |  Zona: '"\$AZ"'#g' /var/www/html/index.html
+
               # 6. Levantar Nginx Dockerizado montando el directorio estatico modificado
               docker run -d -p 80:80 --name web_server -v /var/www/html:/usr/share/nginx/html nginx
 
