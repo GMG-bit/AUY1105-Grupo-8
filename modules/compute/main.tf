@@ -103,8 +103,7 @@ resource "aws_launch_template" "app_lt" {
                 },
                 "metrics": {
                   "append_dimensions": {
-                    "InstanceId": "$${aws:InstanceId}",
-                    "InstanceType": "$${aws:InstanceType}"
+                    "AutoScalingGroupName": "$${aws:AutoScalingGroupName}"
                   },
                   "metrics_collected": {
                     "cpu": {

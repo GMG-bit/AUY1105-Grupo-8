@@ -162,8 +162,7 @@ module "database" {
 # 6. Tema de Notificaciones SNS para Alertas
 resource "aws_sns_topic" "alerts" {
   #checkov:skip=CKV_AWS_26:Cifrado KMS para el tema SNS no es critico para el alcance de este laboratorio academico
-  name              = "${local.project_name_clean}-alerts-topic"
-  kms_master_key_id = "alias/aws/sns" # Cifrado por defecto de SNS para mayor seguridad
+  name = "${local.project_name_clean}-alerts-topic"
 }
 
 # Suscripción de Correo al Tema SNS
@@ -207,7 +206,7 @@ resource "aws_cloudwatch_metric_alarm" "memory_high" {
   ok_actions          = [aws_sns_topic.alerts.arn]
 
   dimensions = {
-    InstanceType = "t3.small"
+    AutoScalingGroupName = module.app1_linux_compute.asg_name
   }
 }
 
@@ -247,7 +246,7 @@ resource "aws_cloudwatch_dashboard" "main" {
         height = 6
         properties = {
           metrics = [
-            ["CWAgent", "used_percent", "InstanceType", "t3.small"]
+            ["CWAgent", "used_percent", "AutoScalingGroupName", module.app1_linux_compute.asg_name]
           ]
           period = 60
           stat   = "Average"
