@@ -7,7 +7,10 @@ resource "aws_launch_template" "app_lt" {
   instance_type = "t3.small"
   key_name      = var.key_name
 
-  vpc_security_group_ids = var.security_group_ids
+  network_interfaces {
+    associate_public_ip_address = true
+    security_groups             = var.security_group_ids
+  }
 
   iam_instance_profile {
     name = "LabInstanceProfile" # Perfil de instancia IAM pre-creado en AWS Academy Learner Lab
@@ -53,11 +56,8 @@ resource "aws_launch_template" "app_lt" {
               # 5. Agregar el registro de montaje al fstab para mantenerlo persistente tras reinicios
               echo '/swapfile swap swap defaults 0 0' >> /etc/fstab
 
-              # 1. Instalar Docker
-              curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
-              echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \$(lsb_release -cs) stable" > /etc/apt/sources.list.d/docker.list
-              apt-get update -y
-              apt-get install -y docker-ce docker-ce-cli containerd.io
+              # 1. Instalar Docker (Usar docker.io para evitar problemas de repositorios externos en Ubuntu 24.04)
+              apt-get install -y docker.io
               systemctl start docker
               systemctl enable docker
               
