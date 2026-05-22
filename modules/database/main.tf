@@ -1,11 +1,11 @@
 # El Subnet Group ahora apunta a las subredes privadas
 resource "aws_db_subnet_group" "postgres_subnet_group" {
-  name        = "${var.project_name}-db-subnet-group"
+  name        = lower("${var.project_name}-db-subnet-group")
   subnet_ids  = var.private_subnet_ids
   description = "Grupo de subredes privadas para MySQL"
 
   tags = {
-    Name = "${var.project_name}-db-subnet-group"
+    Name = lower("${var.project_name}-db-subnet-group")
   }
 }
 
@@ -14,7 +14,7 @@ resource "aws_db_instance" "mysql" {
   #checkov:skip=CKV_AWS_133:Respaldos manejados de forma centralizada
   #checkov:skip=CKV_AWS_354:Performance Insights no requerido por el alcance
   #checkov:skip=CKV_AWS_16:Se deshabilita snapshot final para evitar costos en laboratorios temporales
-  identifier            = "${var.project_name}-mysql"
+  identifier            = lower("${var.project_name}-mysql")
   engine                = "mysql"
   engine_version        = "8.0"
   instance_class        = "db.t4g.small"
