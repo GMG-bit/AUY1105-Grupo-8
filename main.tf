@@ -6,10 +6,15 @@
 # Origen de datos para capturar dinámicamente el Account ID de AWS
 data "aws_caller_identity" "current" {}
 
+locals {
+  # Sanitize the project name: trim leading/trailing spaces and replace internal spaces with hyphens
+  project_name_clean = replace(trimspace(var.project_name), " ", "-")
+}
+
 # 1. Red Base (VPC, Subredes Públicas/Privadas, NAT Gateway y Flow Logs)
 module "vpc" {
   source               = "./modules/vpc"
-  project_name         = var.project_name
+  project_name         = local.project_name_clean
   vpc_cidr_block       = var.vpc_cidr_block
   public_subnet_cidrs  = var.public_subnet_cidrs
   private_subnet_cidrs = var.private_subnet_cidrs
@@ -18,7 +23,7 @@ module "vpc" {
 # 2. Grupo de Seguridad para los Servidores (Capa de Cómputo EC2)
 resource "aws_security_group" "servers_sg" {
   #checkov:skip=CKV_AWS_24:Se permite SSH de forma abierta por defecto para el entorno de aprendizaje académico, restringible por variable
-  name        = "${var.project_name}-servers-sg"
+  name        = "${local.project_name_clean}-servers-sg"
   description = "Security Group para las instancias EC2 en el ASG"
   vpc_id      = module.vpc.vpc_id
 
@@ -49,7 +54,7 @@ resource "aws_security_group" "servers_sg" {
   }
 
   tags = {
-    Name = "${var.project_name}-servers-sg"
+    Name = "${local.project_name_clean}-servers-sg"
   }
 }
 
@@ -74,7 +79,7 @@ locals {
 resource "aws_s3_bucket" "assets" {
   #checkov:skip=CKV_AWS_18:Access logging no es critico para este entorno de laboratorio academico
   #checkov:skip=CKV_AWS_144:Cross-region replication no es necesario para el alcance del laboratorio
-  bucket        = "${var.project_name}-assets-${data.aws_caller_identity.current.account_id}"
+  bucket        = "${lower(local.project_name_clean)}-assets-${data.aws_caller_identity.current.account_id}"
   force_destroy = true
 }
 
@@ -116,7 +121,7 @@ resource "aws_s3_object" "html_files" {
 # 3. Capa de Balanceo de Carga (Application Load Balancer)
 module "balanceador" {
   source            = "./modules/balanceador"
-  project_name      = var.project_name
+  project_name      = local.project_name_clean
   vpc_id            = module.vpc.vpc_id
   public_subnet_ids = module.vpc.public_subnet_ids
 }
@@ -124,7 +129,7 @@ module "balanceador" {
 # 4. Capa de Cómputo Horizontal (Auto Scaling Group + Launch Template)
 module "app1_linux_compute" {
   source             = "./modules/compute"
-  project_name       = var.project_name
+  project_name       = local.project_name_clean
   subnet_ids         = module.vpc.public_subnet_ids
   security_group_ids = [aws_security_group.servers_sg.id]
   key_name           = var.key_name
@@ -141,7 +146,7 @@ module "app1_linux_compute" {
 # 5. Capa de Datos Cifrada (RDS MySQL Multi-AZ)
 module "database" {
   source                = "./modules/database"
-  project_name          = var.project_name
+  project_name          = local.project_name_clean
   vpc_id                = module.vpc.vpc_id
   private_subnet_ids    = module.vpc.private_subnet_ids
   ec2_security_group_id = aws_security_group.servers_sg.id
@@ -154,7 +159,7 @@ module "database" {
 # 6. Tema de Notificaciones SNS para Alertas
 resource "aws_sns_topic" "alerts" {
   #checkov:skip=CKV_AWS_26:Cifrado KMS para el tema SNS no es critico para el alcance de este laboratorio academico
-  name              = "${var.project_name}-alerts-topic"
+  name              = "${local.project_name_clean}-alerts-topic"
   kms_master_key_id = "alias/aws/sns" # Cifrado por defecto de SNS para mayor seguridad
 }
 
@@ -167,7 +172,7 @@ resource "aws_sns_topic_subscription" "email_sub" {
 
 # Alarma de CloudWatch: Alta Utilización de CPU en el Auto Scaling Group (>70%)
 resource "aws_cloudwatch_metric_alarm" "cpu_high" {
-  alarm_name          = "${var.project_name}-high-cpu-alarm"
+  alarm_name          = "${local.project_name_clean}-high-cpu-alarm"
   comparison_operator = "GreaterThanOrEqualToThreshold"
   evaluation_periods  = 2
   metric_name         = "CPUUtilization"
@@ -186,7 +191,7 @@ resource "aws_cloudwatch_metric_alarm" "cpu_high" {
 
 # Alarma de CloudWatch: Alta Utilización de Memoria (Reportada por el CloudWatch Agent, >70%)
 resource "aws_cloudwatch_metric_alarm" "memory_high" {
-  alarm_name          = "${var.project_name}-high-memory-alarm"
+  alarm_name          = "${local.project_name_clean}-high-memory-alarm"
   comparison_operator = "GreaterThanOrEqualToThreshold"
   evaluation_periods  = 2
   metric_name         = "used_percent"
@@ -205,7 +210,7 @@ resource "aws_cloudwatch_metric_alarm" "memory_high" {
 
 # Dashboard Ejecutivo y Técnico de CloudWatch
 resource "aws_cloudwatch_dashboard" "main" {
-  dashboard_name = "${var.project_name}-monitoring-dashboard"
+  dashboard_name = "${local.project_name_clean}-monitoring-dashboard"
 
   dashboard_body = jsonencode({
     widgets = [
@@ -277,7 +282,7 @@ resource "aws_cloudwatch_dashboard" "main" {
         height = 6
         properties = {
           metrics = [
-            ["AWS/RDS", "CPUUtilization", "DBInstanceIdentifier", "${var.project_name}-mysql"]
+            ["AWS/RDS", "CPUUtilization", "DBInstanceIdentifier", "${local.project_name_clean}-mysql"]
           ]
           period = 60
           stat   = "Average"
@@ -302,13 +307,13 @@ resource "aws_cloudwatch_dashboard" "main" {
 # Bóveda de Respaldo Centralizada
 resource "aws_backup_vault" "vault" {
   #checkov:skip=CKV_AWS_166:KMS de la boveda no requiere configuracion avanzada para el alcance academico, usa KMS por defecto
-  name        = "${var.project_name}-backup-vault"
+  name        = "${local.project_name_clean}-backup-vault"
   kms_key_arn = "arn:aws:kms:${var.aws_region}:${data.aws_caller_identity.current.account_id}:alias/aws/backup"
 }
 
 # Plan de Respaldo Diario con Retención de 7 días
 resource "aws_backup_plan" "backup_plan" {
-  name = "${var.project_name}-backup-plan"
+  name = "${local.project_name_clean}-backup-plan"
 
   rule {
     rule_name         = "daily-backup-rule"
@@ -324,7 +329,7 @@ resource "aws_backup_plan" "backup_plan" {
 # Selección de Recursos (EC2 por Tag, y base de datos RDS MySQL por ARN)
 resource "aws_backup_selection" "backup_selection" {
   iam_role_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/LabRole" # Utiliza LabRole preexistente de AWS Academy
-  name         = "${var.project_name}-backup-resources"
+  name         = "${local.project_name_clean}-backup-resources"
   plan_id      = aws_backup_plan.backup_plan.id
 
   # Selecciona instancias EC2 con la etiqueta BackupClass = DailyBackup
@@ -336,6 +341,6 @@ resource "aws_backup_selection" "backup_selection" {
 
   # Selecciona explícitamente el recurso de Base de Datos RDS MySQL
   resources = [
-    "arn:aws:rds:${var.aws_region}:${data.aws_caller_identity.current.account_id}:db:${var.project_name}-mysql"
+    "arn:aws:rds:${var.aws_region}:${data.aws_caller_identity.current.account_id}:db:${local.project_name_clean}-mysql"
   ]
 }
