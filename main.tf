@@ -9,6 +9,9 @@ data "aws_caller_identity" "current" {}
 locals {
   # Sanitize the project name: trim leading/trailing spaces and replace internal spaces with hyphens
   project_name_clean = replace(trimspace(var.project_name), " ", "-")
+
+  # Sanitize the subscription email and fall back to the default if empty
+  subscription_email_clean = trimspace(var.subscription_email) != "" ? trimspace(var.subscription_email) : "gas.mardones@duocuc.cl"
 }
 
 # 1. Red Base (VPC, Subredes Públicas/Privadas, NAT Gateway y Flow Logs)
@@ -167,7 +170,7 @@ resource "aws_sns_topic" "alerts" {
 resource "aws_sns_topic_subscription" "email_sub" {
   topic_arn = aws_sns_topic.alerts.arn
   protocol  = "email"
-  endpoint  = trimspace(var.subscription_email)
+  endpoint  = local.subscription_email_clean
 }
 
 # Alarma de CloudWatch: Alta Utilización de CPU en el Auto Scaling Group (>70%)
@@ -282,7 +285,7 @@ resource "aws_cloudwatch_dashboard" "main" {
         height = 6
         properties = {
           metrics = [
-            ["AWS/RDS", "CPUUtilization", "DBInstanceIdentifier", "${local.project_name_clean}-mysql"]
+            ["AWS/RDS", "CPUUtilization", "DBInstanceIdentifier", "${lower(local.project_name_clean)}-mysql"]
           ]
           period = 60
           stat   = "Average"
@@ -340,6 +343,6 @@ resource "aws_backup_selection" "backup_selection" {
 
   # Selecciona explícitamente el recurso de Base de Datos RDS MySQL
   resources = [
-    "arn:aws:rds:${var.aws_region}:${data.aws_caller_identity.current.account_id}:db:${local.project_name_clean}-mysql"
+    "arn:aws:rds:${var.aws_region}:${data.aws_caller_identity.current.account_id}:db:${lower(local.project_name_clean)}-mysql"
   ]
 }
