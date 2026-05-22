@@ -53,6 +53,66 @@ resource "aws_security_group" "servers_sg" {
   }
 }
 
+# 2.5 Capa de Almacenamiento Estático para Assets (Amazon S3)
+locals {
+  mime_types = {
+    "html"  = "text/html"
+    "css"   = "text/css"
+    "js"    = "application/javascript"
+    "png"   = "image/png"
+    "jpg"   = "image/jpeg"
+    "jpeg"  = "image/jpeg"
+    "gif"   = "image/gif"
+    "svg"   = "image/svg+xml"
+    "woff"  = "font/woff"
+    "woff2" = "font/woff2"
+    "ttf"   = "font/sfnt"
+    "ico"   = "image/x-icon"
+  }
+}
+
+resource "aws_s3_bucket" "assets" {
+  #checkov:skip=CKV_AWS_18:Access logging no es critico para este entorno de laboratorio academico
+  #checkov:skip=CKV_AWS_144:Cross-region replication no es necesario para el alcance del laboratorio
+  bucket        = "${var.project_name}-assets-${data.aws_caller_identity.current.account_id}"
+  force_destroy = true
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "assets_encryption" {
+  bucket = aws_s3_bucket.assets.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
+}
+
+resource "aws_s3_bucket_public_access_block" "assets_block" {
+  bucket                  = aws_s3_bucket.assets.id
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+resource "aws_s3_bucket_versioning" "assets_versioning" {
+  bucket = aws_s3_bucket.assets.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+resource "aws_s3_object" "html_files" {
+  for_each = fileset("${path.module}/Sitio Generico/html", "**/*")
+
+  bucket       = aws_s3_bucket.assets.id
+  key          = "html/${each.value}"
+  source       = "${path.module}/Sitio Generico/html/${each.value}"
+  etag         = filemd5("${path.module}/Sitio Generico/html/${each.value}")
+  content_type = lookup(local.mime_types, element(split(".", each.value), length(split(".", each.value)) - 1), "application/octet-stream")
+}
+
 # 3. Capa de Balanceo de Carga (Application Load Balancer)
 module "balanceador" {
   source            = "./modules/balanceador"
@@ -69,11 +129,14 @@ module "app1_linux_compute" {
   security_group_ids = [aws_security_group.servers_sg.id]
   key_name           = var.key_name
   target_group_arn   = module.balanceador.target_group_arn
+  assets_bucket_id   = aws_s3_bucket.assets.id
+  aws_region         = var.aws_region
 
   desired_capacity = 2
   min_size         = 2
   max_size         = 3 # Ajustado al requerimiento exacto: mín:2, deseado:2, máx:3
 }
+
 
 # 5. Capa de Datos Cifrada (RDS MySQL Multi-AZ)
 module "database" {

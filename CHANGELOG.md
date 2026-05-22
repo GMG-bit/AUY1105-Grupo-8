@@ -9,6 +9,16 @@ y las versiones se ordenan de la más reciente a la más antigua.
 
 ## [Unreleased]
 
+### Añadido
+- **Despliegue Dinámico y Ligero del Sitio E-Commerce (S3 Sync):**
+  - Creado un bucket seguro de **Amazon S3** (`aws_s3_bucket.assets`) con cifrado predeterminado por AES256, bloqueo completo de acceso público y habilitación de versionado (`aws_s3_bucket_versioning`).
+  - Implementada una subida dinámica de la estructura de archivos estáticos de `Sitio Generico/html` utilizando `aws_s3_object` con un mapa local de MIME types (`mime_types`) para asegurar que el navegador cargue los recursos (.html, .css, .js, .woff2, etc.) con sus tipos de contenido correctos.
+  - Automatizada la instalación de **AWS CLI v2** y la sincronización recursiva (`aws s3 sync`) de los archivos del sitio en el arranque (EC2 `user_data`) de forma eficiente, eliminando el bloat y peso en la plantilla de lanzamiento.
+- **Identificación Dinámica de Servidores y Banner de Balanceo (HA Demo):**
+  - Implementada consulta dinámica a metadatos de instancia **IMDSv2** en el script de arranque para extraer de manera segura el `Instance ID`, la `IP Privada` y la `Zona de Disponibilidad` (AZ) del nodo.
+  - Inyección automatizada de un **Banner Flotante Premium** y moderno (con diseño estilizado de degradados, bordes redondeados y tipografía sin serifa) en la parte superior de la página principal (`index.html`) mediante un comando `sed` seguro y no invasivo en tiempo de arranque.
+  - Configurado el contenedor de **Docker Nginx** para levantar la aplicación web montando la ruta local modificada (`-v /var/www/html:/usr/share/nginx/html`), demostrando visualmente el balanceo de carga entre los nodos al recargar rápidamente el balanceador de aplicaciones (ALB).
+
 ---
 
 ## [2026-05-21]

@@ -34,7 +34,7 @@ resource "aws_launch_template" "app_lt" {
     enabled = true # Habilita monitoreo detallado de 1 minuto en CloudWatch
   }
 
-  # USER DATA: Instalación automatizada de Docker, Nginx de prueba y CloudWatch Agent
+  # USER DATA: Instalación automatizada de Docker, AWS CLI, Sincronización S3, Metadatos IMDSv2, Banner y CloudWatch Agent
   user_data = base64encode(<<-EOF
               #!/bin/bash
               # Actualizar paquetes
@@ -61,12 +61,34 @@ resource "aws_launch_template" "app_lt" {
               systemctl start docker
               systemctl enable docker
               
-              # Test temporal para que el ALB pase el Health Check (Nginx en Docker)
-              docker run -d -p 80:80 nginx
+              # 2. Instalar AWS CLI v2
+              curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+              unzip awscliv2.zip
+              ./aws/install
 
-              # 2. Instalar el AWS CloudWatch Agent
+              # 3. Descargar el Sitio Generico desde S3 de forma dinamica y ligera
+              mkdir -p /var/www/html
+              aws s3 sync s3://${var.assets_bucket_id}/html /var/www/html --region ${var.aws_region}
+
+              # 4. Obtener metadatos de la instancia mediante IMDSv2
+              TOKEN=$(curl -s -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
+              INSTANCE_ID=$(curl -s -H "X-aws-ec2-metadata-token: \$TOKEN" http://169.254.169.254/latest/meta-data/instance-id)
+              PRIVATE_IP=$(curl -s -H "X-aws-ec2-metadata-token: \$TOKEN" http://169.254.169.254/latest/meta-data/local-ipv4)
+              AZ=$(curl -s -H "X-aws-ec2-metadata-token: \$TOKEN" http://169.254.169.254/latest/meta-data/placement/availability-zone)
+
+              # 5. Diseñar e inyectar el Banner Flotante Premium para demostrar el Balanceo de Carga
+              BANNER_HTML="<div style='background:linear-gradient(135deg, #623CE4 0%, #4A2CB3 100%);color:#ffffff;text-align:center;padding:12px;font-size:15px;font-family:sans-serif;position:sticky;top:0;left:0;width:100%;z-index:99999;box-shadow:0 4px 15px rgba(0,0,0,0.2);display:flex;justify-content:center;align-items:center;gap:20px;'><span>⚡ <strong>TechNova Server</strong></span><span>🆔 ID Instancia: <code style=\'background:rgba(255,255,255,0.25);padding:2px 6px;border-radius:4px;\'>\$INSTANCE_ID</code></span><span>🔌 IP Privada: <code style=\'background:rgba(255,255,255,0.25);padding:2px 6px;border-radius:4px;\'>\$PRIVATE_IP</code></span><span>📍 Zona: <code style=\'background:rgba(255,255,255,0.25);padding:2px 6px;border-radius:4px;\'>\$AZ</code></span></div>"
+              
+              # Reemplazar la etiqueta <body> inicial para agregar el banner al principio de index.html
+              sed -i \"s|<body>|<body>\$BANNER_HTML|g\" /var/www/html/index.html
+
+              # 6. Levantar Nginx Dockerizado montando el directorio estatico modificado
+              docker run -d -p 80:80 --name web_server -v /var/www/html:/usr/share/nginx/html nginx
+
+              # 7. Instalar el AWS CloudWatch Agent
               wget https://s3.amazonaws.com/amazoncloudwatch-agent/ubuntu/amd64/latest/amazon-cloudwatch-agent.deb
               dpkg -i -E ./amazon-cloudwatch-agent.deb
+
 
               # 3. Crear el archivo de configuracion del CloudWatch Agent
               # Captura métricas detalladas de CPU, Memoria, Disco y Red
