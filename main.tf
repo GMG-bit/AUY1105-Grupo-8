@@ -167,7 +167,7 @@ resource "aws_sns_topic" "alerts" {
 resource "aws_sns_topic_subscription" "email_sub" {
   topic_arn = aws_sns_topic.alerts.arn
   protocol  = "email"
-  endpoint  = var.subscription_email
+  endpoint  = trimspace(var.subscription_email)
 }
 
 # Alarma de CloudWatch: Alta Utilización de CPU en el Auto Scaling Group (>70%)
@@ -307,8 +307,7 @@ resource "aws_cloudwatch_dashboard" "main" {
 # Bóveda de Respaldo Centralizada
 resource "aws_backup_vault" "vault" {
   #checkov:skip=CKV_AWS_166:KMS de la boveda no requiere configuracion avanzada para el alcance academico, usa KMS por defecto
-  name        = "${local.project_name_clean}-backup-vault"
-  kms_key_arn = "arn:aws:kms:${var.aws_region}:${data.aws_caller_identity.current.account_id}:alias/aws/backup"
+  name = "${local.project_name_clean}-backup-vault"
 }
 
 # Plan de Respaldo Diario con Retención de 7 días
