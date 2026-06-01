@@ -21,7 +21,7 @@ Infraestructura como Código (IaC) con Terraform para el despliegue automatizado
 ## 🏗️ Arquitectura del Sistema (HA & DR)
 
 La solución implementa una infraestructura premium de tres capas distribuida de manera redundante en múltiples zonas de disponibilidad (**us-east-1a** y **us-east-1b**):
-
+![Texto descriptivo de la imagen](aa)
 ```mermaid
 graph TD
     subgraph Internet
