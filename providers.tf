@@ -1,14 +1,5 @@
-terraform {
-  required_version = ">= 1.0.0"
-
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 6.0" # Última versión mayor del proveedor
-    }
-  }
-}
-
+# providers.tf - Configuracion del proveedor AWS para el repositorio raiz.
+# Las restricciones de version de Terraform y proveedores se declaran en versions.tf.
 provider "aws" {
   region = var.aws_region
 }
